@@ -1,44 +1,76 @@
 # Cloud Data Warehouse Starter
 
-This repository contains a starter setup for a large-scale cloud data warehouse connected to a database service.
+هذا المشروع هو قالب عملي لبدء بناء مخزن بيانات سحابي/محلي متكامل مع قاعدة بيانات تشغيلية، ETL، ونظام تحميل بيانات إلى مستودع تحليلي.
 
-## Project Structure
+## المكونات
+
+- PostgreSQL: قاعدة البيانات التشغيلية
+- Python: ETL وملفات معالجة البيانات
+- Docker Compose: تشغيل بيئة التطوير محلياً
+- SQL Scripts: إنشاء الجداول والبيانات التجريبية
+- Warehouse Loader: مثال لتحميل البيانات إلى طبقة التحليل
+
+## هيكل المشروع
 
 ```text
-.
-├── README.md
-├── docker-compose.yml
+cloud-data-warehouse/
+├── .gitignore
 ├── .env.example
-├── infrastructure/
-│   ├── terraform/
-│   └── scripts/
+├── docker-compose.yml
+├── README.md
 ├── app/
 │   ├── db/
-│   ├── warehouse/
+│   │   ├── connect.py
+│   │   └── schema.sql
 │   ├── etl/
-│   └── api/
-├── docs/
-│   └── architecture.md
-└── .github/
-    └── workflows/
+│   │   └── extract_sales.py
+│   └── warehouse/
+│       └── load_to_warehouse.py
+└── docs/
+    └── architecture.md
 ```
 
-## Included
+## المتطلبات
 
-- Cloud database connection example
-- Data warehouse configuration
-- ETL pipeline starter
-- Infrastructure scripts
-- Deployment examples
+- Docker
+- Docker Compose
+- Python 3.11+
+- pip
 
-## Quick Start
+## التشغيل السريع
 
-1. Copy `.env.example` to `.env`
-2. Configure database credentials
-3. Run docker-compose
-4. Start the ETL pipeline
+1. انسخ ملف `.env.example` إلى `.env`
+2. شغّل قاعدة البيانات:
 
-## Example .env
+```bash
+docker-compose up -d
+```
+
+3. تثبيت الحزم:
+
+```bash
+python -m pip install psycopg2-binary pandas python-dotenv
+```
+
+4. إنشاء الجداول:
+
+```bash
+psql -h localhost -U postgres -d appdb -f app/db/schema.sql
+```
+
+5. تشغيل ETL:
+
+```bash
+python app/etl/extract_sales.py
+```
+
+6. تحميل البيانات إلى طبقة المستودع:
+
+```bash
+python app/warehouse/load_to_warehouse.py
+```
+
+## إعداد متغيرات البيئة
 
 ```env
 DB_HOST=localhost
@@ -46,21 +78,50 @@ DB_PORT=5432
 DB_NAME=appdb
 DB_USER=postgres
 DB_PASSWORD=postgres
-WAREHOUSE_HOST=warehouse.example.com
-WAREHOUSE_PORT=5432
-WAREHOUSE_NAME=analytics
-WAREHOUSE_USER=warehouse_user
-WAREHOUSE_PASSWORD=your_secret
+
+APP_ENV=development
+LOG_LEVEL=INFO
 ```
 
-## Main Technologies
+## مثال قاعدة بيانات
 
-- PostgreSQL
-- dbt
-- Docker
-- Terraform
-- Python
+```sql
+CREATE TABLE sales (
+    id SERIAL PRIMARY KEY,
+    order_id VARCHAR(100),
+    customer_name VARCHAR(100),
+    product_name VARCHAR(100),
+    quantity INT,
+    total_amount NUMERIC(10,2),
+    order_date DATE
+);
+```
 
-## Notes
+## مثال ETL
 
-This repository is a starting template and should be adapted to your specific cloud provider and architecture.
+```python
+import pandas as pd
+import psycopg2
+
+conn = psycopg2.connect(
+    host="localhost",
+    dbname="appdb",
+    user="postgres",
+    password="postgres",
+    port="5432",
+)
+
+df = pd.read_sql("SELECT * FROM sales", conn)
+print(df.head())
+```
+
+## الخطوة التالية
+
+- ربط بياناتك بواجهة برمجة أو تطبيق
+- تحويل هذا القالب إلى AWS / Azure / GCP
+- إضافة dbt أو Airflow
+- تشغيل تقارير BI
+
+## ملاحظات
+
+هذا المشروع يعد نقطة انطلاق، ويمكن توسيعه لاحقاً ليصبح مستودع بيانات كامل جاهز للإنتاج.
